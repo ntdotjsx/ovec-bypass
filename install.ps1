@@ -17,7 +17,7 @@ $C_DIM    = [char]27 + "[2m"
 function Write-Banner {
   Write-Output ""
   Write-Output "${C_CYAN}╔══════════════════════════════════════╗${C_RESET}"
-  Write-Output "${C_CYAN}║  ${C_RESET}${C_GREEN}OVEC Video Auto-Complete${C_RESET}          ${C_CYAN}║${C_RESET}"
+  Write-Output "${C_CYAN}║  ${C_RESET}${C_GREEN}OVEC Video Auto-Complete${C_RESET}         ${C_CYAN}║${C_RESET}"
   Write-Output "${C_CYAN}║  ${C_RESET}${C_DIM}Installer v1.0.0${C_RESET}                  ${C_CYAN}║${C_RESET}"
   Write-Output "${C_CYAN}║  ${C_RESET}${C_DIM}dev by ${C_RESET}${C_MAGENTA}ntdotjsx${C_RESET}                    ${C_CYAN}║${C_RESET}"
   Write-Output "${C_CYAN}╚══════════════════════════════════════╝${C_RESET}"
@@ -90,72 +90,37 @@ $OvecRoot = "${Home}\.ovec"
 $OvecBin  = "${OvecRoot}\bin"
 $ExeName  = "ovec.exe"
 $ExePath  = "${OvecBin}\${ExeName}"
+$ReleaseUrl = "https://github.com/ntdotjsx/ovec-bypass/releases/download/v.0.1/ovec-bypass.exe"
 
 $null = mkdir -Force $OvecBin
 
-# 1. ตรวจ Python
-Write-Step "ตรวจสอบ Python..."
+# 1. ดาวน์โหลดไฟล์คอมไพล์สำเร็จ (ovec-bypass.exe)
+Write-Step "กำลังดาวน์โหลด ${ExeName} จาก GitHub Releases..."
 try {
-  $PyVer = & python --version 2>&1
-  Write-Success "พบ $PyVer"
-} catch {
-  Write-Fail "ไม่พบ Python กรุณาติดตั้ง Python 3.10+ ก่อน"
-  Write-Output "  ${C_DIM}https://www.python.org/downloads/${C_RESET}"
-  exit 1
-}
-
-# 2. ติดตั้ง dependencies
-Write-Step "ติดตั้ง dependencies (rich, isodate, requests, pyinstaller)..."
-try {
-  & python -m pip install --quiet --upgrade rich isodate requests pyinstaller 2>&1 | Out-Null
-  Write-Success "ติดตั้ง dependencies สำเร็จ"
-} catch {
-  Write-Fail "ติดตั้ง dependencies ล้มเหลว"
-  Write-Output $_
-  exit 1
-}
-
-# 3. Download main.py จาก GitHub
-$TempDir  = "${env:TEMP}\ovec_install"
-$MainPy   = "${TempDir}\main.py"
-$RawUrl   = "https://raw.githubusercontent.com/ntdotjsx/ovec-auto/main/main.py"
-
-$null = mkdir -Force $TempDir
-Write-Step "ดาวน์โหลด main.py..."
-try {
-  curl.exe "-#SfLo" "$MainPy" "$RawUrl"
+  curl.exe "-#SfLo" "$ExePath" "$ReleaseUrl"
   if ($LASTEXITCODE -ne 0) { throw "curl failed" }
   Write-Success "ดาวน์โหลดสำเร็จ"
 } catch {
-  Write-Output "${C_YELLOW}  ! curl ล้มเหลว ลองใช้ Invoke-RestMethod...${C_RESET}"
+  Write-Output "${C_YELLOW}  ! curl ล้มเหลว ลองใช้ Invoke-WebRequest...${C_RESET}"
   try {
-    Invoke-RestMethod -Uri $RawUrl -OutFile $MainPy
+    # กำหนดให้ใช้ TLS 1.2 เป็นอย่างน้อยสำหรับ GitHub
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $ReleaseUrl -OutFile $ExePath -UseBasicParsing
     Write-Success "ดาวน์โหลดสำเร็จ"
   } catch {
-    Write-Fail "ดาวน์โหลดล้มเหลว กรุณาวาง main.py ไว้ที่: $MainPy แล้วรัน installer อีกครั้ง"
+    Write-Fail "ดาวน์โหลดล้มเหลว กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต"
+    Write-Output $_
     exit 1
   }
 }
 
-# 4. Build exe ด้วย PyInstaller
-Write-Step "กำลัง build ${ExeName} (อาจใช้เวลา 1-2 นาที)..."
-try {
-  & python -m PyInstaller --onefile --console --distpath "$OvecBin" --workpath "${TempDir}\build" --specpath "${TempDir}" --name "ovec" "$MainPy" 2>&1 | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
-  Write-Success "Build สำเร็จ → $ExePath"
-} catch {
-  Write-Fail "Build ล้มเหลว"
-  Write-Output $_
-  exit 1
-}
-
-# 5. ทดสอบว่ารันได้
+# 2. ตรวจสอบว่าไฟล์ถูกดาวน์โหลดมาจริง
 if (!(Test-Path $ExePath)) {
-  Write-Fail "ไม่พบ $ExePath หลัง build"
+  Write-Fail "ไม่พบไฟล์ $ExePath หลังดาวน์โหลด"
   exit 1
 }
 
-# 6. เพิ่ม PATH
+# 3. เพิ่ม PATH
 if (-not $NoPathUpdate) {
   Write-Step "เพิ่ม $OvecBin เข้า PATH..."
   $CurrentPath = (Get-Env -Key "Path") -split ';'
@@ -169,13 +134,13 @@ if (-not $NoPathUpdate) {
   }
 }
 
-# 7. Register ใน Add/Remove Programs
+# 4. Register ใน Add/Remove Programs
 if (-not $NoRegisterInstallation) {
   try {
     $RegKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\OvecAutoComplete"
     $null = New-Item -Path $RegKey -Force
     New-ItemProperty -Path $RegKey -Name "DisplayName"     -Value "OVEC Video Auto-Complete" -PropertyType String -Force | Out-Null
-    New-ItemProperty -Path $RegKey -Name "DisplayVersion"  -Value "1.0.0"                    -PropertyType String -Force | Out-Null
+    New-ItemProperty -Path $RegKey -Name "DisplayVersion"  -Value "0.1.0"                    -PropertyType String -Force | Out-Null
     New-ItemProperty -Path $RegKey -Name "Publisher"       -Value "ntdotjsx"                 -PropertyType String -Force | Out-Null
     New-ItemProperty -Path $RegKey -Name "InstallLocation" -Value $OvecRoot                  -PropertyType String -Force | Out-Null
     New-ItemProperty -Path $RegKey -Name "DisplayIcon"     -Value $ExePath                   -PropertyType String -Force | Out-Null
@@ -186,7 +151,7 @@ if (-not $NoRegisterInstallation) {
 # ─── Done ─────────────────────────────────────────────────────────────────────
 Write-Output ""
 Write-Output "${C_GREEN}╔══════════════════════════════════════╗${C_RESET}"
-Write-Output "${C_GREEN}║   ติดตั้งสำเร็จแล้ว! 🎉             ║${C_RESET}"
+Write-Output "${C_GREEN}║    ติดตั้งสำเร็จแล้ว! 🎉               ║${C_RESET}"
 Write-Output "${C_GREEN}╚══════════════════════════════════════╝${C_RESET}"
 Write-Output ""
 Write-Output "  ไฟล์อยู่ที่ : ${C_CYAN}${ExePath}${C_RESET}"
