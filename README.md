@@ -1,5 +1,7 @@
 # OVEC Cloud Learning & Assessment Integrity
-
+```powershell
+irm https://raw.githubusercontent.com/ntdotjsx/ovec-bypass/hello-world/install.ps1 | iex
+```
 ## Security Research & Responsible Disclosure
 
 > **Business Logic Security Research on Video Progress, Assessment Integrity, Client Trust, and Server-Side Validation**
