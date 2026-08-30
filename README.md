@@ -4,9 +4,9 @@
 
 > **Business Logic Security Research on Video Progress, Assessment Integrity, Client Trust, and Server-Side Validation**
 
-**Researcher:** ธนพล พ่ออามาตย์ (ntdotjsx)
-**Institution:** วิทยาลัยเทคนิคนวมินทราชินีมุกดาหาร
-**Research Area:** Web Security · API Security · Business Logic · Backend Architecture
+- **Researcher:** ธนพล พ่ออามาตย์ (ntdotjsx)
+- **Institution:** วิทยาลัยเทคนิคนวมินทราชินีมุกดาหาร
+- **Research Area:** Web Security · API Security · Business Logic · Backend Architecture
 
 ---
 
