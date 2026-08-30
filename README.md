@@ -69,7 +69,7 @@ irm https://raw.githubusercontent.com/ntdotjsx/ovec-bypass/hello-world/install.p
 ผมจึงเริ่มศึกษาการสื่อสารระหว่าง Client และ Backend API
 
 ตอนแรกผมไม่ได้เขียน Python หรือ Automation ขึ้นมาทันที แต่เริ่มจากการใช้งานระบบตามปกติ ตรวจสอบ Network Request จาก Browser จากนั้นใช้ **Burp Suite** และ **Postman** เพื่อทำความเข้าใจ Request / Response และทดลองเปลี่ยน Parameter ทีละค่า
-
+<img width="632" height="356" alt="image" src="https://github.com/user-attachments/assets/bd7a8f8e-8310-48a4-9c8d-f84c4e988fb8" />
 สิ่งที่พบไม่ได้เป็นช่องโหว่แบบ SQL Injection หรือ XSS แต่เป็นปัญหาอีกประเภทหนึ่งที่ผมมองว่าน่าสนใจมาก คือ
 
 **Business Logic Vulnerability / Client Trust Issue**
