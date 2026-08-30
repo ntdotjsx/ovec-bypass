@@ -72,7 +72,7 @@ with console.status("[bold green]กำลังดึงรายการว�
         "quiz_set_id": QUIZ_SET_ID
     })
 videos = fetch_response.json()["data"]["videos"]
-console.print(f"[green]✔[/] พบวิดีโอทั้งหมด [bold]{len(videos)}[/] รายการ\n")
+console.print(f"[green][/] พบวิดีโอทั้งหมด [bold]{len(videos)}[/] รายการ\n")
 
 # Step 2: วนทำทุก EP
 for i, video in enumerate(videos):
@@ -90,16 +90,16 @@ for i, video in enumerate(videos):
     ))
 
     if is_completed:
-        console.print("  [green] success skiped[/]\n")
+        console.print("[green] success skiped[/]\n")
         continue
 
     with console.status("[bold yellow]กำลังดึง duration จาก YouTube...[/]", spinner="dots2"):
         VIDEO_DURATION = get_youtube_duration(video_url)
 
     if not VIDEO_DURATION:
-        console.print("  [red] ดึง duration ไม่ได้ ข้ามไป[/]\n")
+        console.print("[red] ดึง duration ไม่ได้ ข้ามไป[/]\n")
         continue
-    console.print(f"  [dim]Duration: {VIDEO_DURATION} วินาที[/]")
+    console.print(f"[dim]Duration: {VIDEO_DURATION} วินาที[/]")
 
     # Start Watching
     with console.status("[bold blue]กำลัง start watching...[/]", spinner="arc"):
@@ -164,7 +164,7 @@ for i, video in enumerate(videos):
             "video_url": video_url,
             "video_duration": 0
         })
-    console.print("  [bold green] Complete![/]\n")
+    console.print("[bold green] Complete![/]\n")
 
 console.print(Panel(
     Align.center("[bold green] เสร็จสิ้นทุก EP แล้ว![/]"),
