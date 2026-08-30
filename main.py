@@ -1,5 +1,4 @@
 # ผมไม่ได้ obfuctor ให้อาจารย์เข้ามาแงะดูเลยนะครับเนี่ย
-# by ntdotjsx https://github.com/ntdotjsx
 import requests
 import time
 import re
