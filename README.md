@@ -1,171 +1,181 @@
-# OVEC Cloud Video Progress — Security Research
-```powershell
-irm https://raw.githubusercontent.com/ntdotjsx/ovec-bypass/hello-world/install.ps1 | iex
+# OVEC Cloud Learning & Assessment Integrity — Security Research
+
+> การศึกษาช่องโหว่ด้าน Business Logic, Client Trust, Video Progress และ Assessment Integrity
+> จัดทำเพื่อการศึกษา Defensive Security และ Responsible Disclosure
+
+---
+
+## ⚠️ Important Notice
+
+Repository นี้เป็นงานศึกษาด้าน Software Security และ Business Logic Vulnerability
+
+ไม่ได้จัดทำขึ้นเพื่อสนับสนุนการโกงข้อสอบ การปลอมคะแนน การข้ามบทเรียน หรือการใช้งานช่องโหว่กับระบบจริงโดยไม่ได้รับอนุญาต
+
+PoC หรือ Automation ที่เกี่ยวข้องกับงานวิจัยนี้ควรถูกใช้งานเฉพาะใน
+
+```text
+Local Lab
+Mock API
+Authorized Test Environment
 ```
-> การศึกษา Business Logic Vulnerability และ Client Trust ในระบบ Video Progress
-> จัดทำเพื่อการศึกษา วิเคราะห์ระบบ และ Responsible Disclosure
+
+เท่านั้น
+
+ตัวอย่าง One-line Installer สำหรับ PoC ถูกปิดไว้ในเอกสาร Public:
+
+```powershell
+# Disabled in public documentation
+# irm https://raw.githubusercontent.com/[REDACTED]/install.ps1 | iex
+```
+
+เหตุผลที่ไม่เผยแพร่คำสั่งใช้งานจริง เพราะช่องโหว่ที่อธิบายใน Repository นี้อาจมีผลต่อข้อมูล Learning Progress และ Assessment Result ของระบบ Production
 
 ---
 
-## ก่อนเริ่มอ่าน
+# เกี่ยวกับงานวิจัยนี้
 
-สวัสดีครับ ผมเป็นนักศึกษาจาก **วิทยาลัยเทคนิคนวมินทราชินีมุกดาหาร** และสนใจด้าน Software Development, Backend, API, System Architecture และ Cybersecurity
+สวัสดีครับ ผมเป็นนักศึกษาจาก **วิทยาลัยเทคนิคนวมินทราชินีมุกดาหาร**
 
-โปรเจกต์นี้เริ่มต้นจากความสงสัยของผมเกี่ยวกับการทำงานของระบบเรียนออนไลน์ว่า
+ผมสนใจด้าน
 
-> ระบบรู้ได้อย่างไรว่าเรา "ดูวิดีโอจริง" และไม่ได้เพียงแค่บอก Server ว่าเราดูไปถึงตรงไหนแล้ว?
+```text
+Software Development
+Full-Stack Development
+Backend Development
+API Design
+System Architecture
+Cybersecurity
+Security Research
+```
 
-จากคำถามง่าย ๆ นี้ ผมจึงเริ่มศึกษาการสื่อสารระหว่าง Browser กับ Backend API
+โปรเจกต์นี้เริ่มจากความสงสัยของผมเกี่ยวกับการทำงานของระบบเรียนออนไลน์
 
-ผมเริ่มจากการใช้งานระบบตามปกติ เปิดดู Network Request จาก Browser จากนั้นใช้ **Burp Suite** เพื่อดูและทำความเข้าใจ HTTP Traffic แล้วนำ Request บางส่วนมาทดลอง Replay ด้วย **Postman**
+คำถามแรกที่ผมสงสัยคือ
 
-ในช่วงแรกผมยังไม่ได้เขียน Automation หรือ Python Script เลย แต่เลือกส่ง Request ด้วยมือและเปลี่ยน Parameter ทีละค่า เพื่อทำความเข้าใจว่า Backend ตรวจสอบอะไรบ้าง
+> ระบบรู้ได้อย่างไรว่าผู้เรียนดูวิดีโอจริง?
 
-สิ่งที่พบในท้ายที่สุดไม่ใช่ช่องโหว่ประเภท SQL Injection, XSS หรือการเจาะ Server โดยตรง แต่เป็นช่องว่างใน **Business Logic และ Trust Boundary** ระหว่าง Client กับ Server
+จากนั้นคำถามก็ขยายต่อไปว่า
+
+> ระบบรู้ได้อย่างไรว่าคะแนนหรือผลการตอบข้อสอบที่บันทึกอยู่ เป็นผลที่ Backend ตรวจสอบเองจริง ๆ?
+
+จากคำถามเหล่านี้ ผมจึงเริ่มศึกษาการสื่อสารระหว่าง Client กับ Backend API
 
 ---
 
-# Disclaimer
+# จุดประสงค์
 
-ผมอยากชี้แจงอย่างชัดเจนว่าโปรเจกต์นี้ไม่ได้มีจุดประสงค์เพื่อโจมตี ทำลายระบบ รบกวนการให้บริการ หรือดูถูกผู้พัฒนาระบบ
+เป้าหมายของงานนี้ไม่ใช่การแสดงว่า
 
-ผมเองก็เป็น Developer และเข้าใจดีว่าการสร้าง Production System จริงหนึ่งระบบมีข้อจำกัดจำนวนมาก ไม่ว่าจะเป็น
+> "ผม Hack ระบบได้"
 
-* Requirement
-* ระยะเวลาพัฒนา
-* งบประมาณ
-* Legacy Code
-* Infrastructure
-* Compatibility
-* UX
-* Security
-* Business Requirement
-* การดูแลระบบหลัง Deploy
+แต่ต้องการศึกษาให้เข้าใจว่า
 
-การที่ Software มีช่องโหว่ไม่ได้หมายความว่าผู้พัฒนาไม่มีความสามารถ
+```text
+ระบบเชื่อข้อมูลอะไรจาก Client
 
-ระบบขนาดใหญ่ทั่วโลกก็มี Security Vulnerability ถูกค้นพบและแก้ไขอยู่ตลอดเวลา
+Security Boundary อยู่ตรงไหน
 
-ในความเป็นจริง ระหว่างการทดสอบครั้งนี้ผมพบว่าระบบ **มี Security Control อยู่แล้วหลายส่วน** โดยเฉพาะการพยายามป้องกันการข้ามตำแหน่งวิดีโออย่างผิดปกติ
+Backend ตรวจสอบ State อย่างไร
+
+Business Logic มี Edge Case อะไร
+
+ผลกระทบเกิดขึ้นกับข้อมูลประเภทใด
+
+และ Architecture ควรแก้ไขอย่างไร
+```
+
+---
+
+# ถึงทีมผู้พัฒนาระบบ
+
+ก่อนเข้าสู่รายละเอียด ผมอยากระบุให้ชัดเจนว่าผมไม่ได้มีเจตนาจะดูถูก ตำหนิ หรือด้อยค่าผลงานของทีมพัฒนาระบบ
+
+ในฐานะคนที่เขียน Software เหมือนกัน ผมเข้าใจว่าระบบ Production จริงมีข้อจำกัดจำนวนมาก เช่น
+
+```text
+Requirement
+Deadline
+Budget
+Legacy Code
+Infrastructure
+Compatibility
+UX
+Security
+Maintenance
+```
+
+ไม่มี Software ใดสามารถรับประกันได้ว่าจะไม่มี Vulnerability
+
+ระหว่างที่ผมศึกษา ผมพบว่าระบบมี Security Control อยู่แล้วหลายส่วน โดยเฉพาะ Logic ที่พยายามป้องกันการข้ามตำแหน่งวิดีโออย่างผิดปกติ
+
+ตรงนี้ควรให้เครดิตกับทีมพัฒนา
 
 สิ่งที่ผมพบจึงไม่ได้หมายความว่า
 
-> "ระบบไม่มี Security"
+> "ผู้พัฒนาไม่ได้ทำ Security"
 
-แต่เป็นกรณีที่
+แต่เป็นกรณีที่ Security Control ที่มีอยู่ยังมี **Business Logic Edge Case**
 
-> "Security Control ที่มีอยู่ยังมี Edge Case ใน Business Logic"
+อย่างไรก็ตาม หากพฤติกรรมที่พบสามารถเกิดขึ้นใน Production ได้จริง ผมคิดว่าควรพูดอย่างตรงไปตรงมาว่า **มีความเสี่ยงสูงและควรได้รับการตรวจสอบ**
 
-และ Edge Case ดังกล่าวอาจมีผลต่อ Integrity ของ Learning Progress จึงเป็นเรื่องที่ผมคิดว่าควรได้รับการตรวจสอบ
-
----
-
-# TL;DR
-
-ประเด็นหลักของงานวิจัยนี้สามารถสรุปได้ด้วยประโยคเดียว:
-
-> **Position Validation ไม่เท่ากับ Real Watch-Time Validation**
-
-ระบบสามารถตรวจสอบได้ว่า Client พยายามกระโดดตำแหน่งวิดีโออย่างผิดปกติหรือไม่
-
-แต่ถ้าการตรวจสอบดังกล่าวไม่ได้สัมพันธ์กับ **เวลาจริงที่ Server สามารถยืนยันได้** Client อาจสามารถสร้าง Progress Sequence ที่ดูสมเหตุสมผลในเชิงตำแหน่ง แต่เกิดขึ้นเร็วกว่าระยะเวลารับชมจริง
-
-นี่คือปัญหาในระดับ **Business Logic / Client Trust**
+โดยเฉพาะเมื่อระบบเกี่ยวข้องกับ Learning Progress และ Assessment Result
 
 ---
 
-# สิ่งที่ใช้ในการศึกษา
+# Research Methodology
 
-เครื่องมือหลักที่ผมใช้คือ
+ผมไม่ได้เริ่มต้นจากการเขียน Python Script
 
-| Tool                    | ใช้ทำอะไร                            |
-| ----------------------- | ------------------------------------ |
-| Browser Developer Tools | ดู Network Request/Response          |
-| Burp Suite              | Intercept และศึกษาพฤติกรรม HTTP      |
-| Postman                 | Replay และแก้ Request ด้วยมือ        |
-| Notepad                 | จด Endpoint, Parameter และผลการทดลอง |
-| Python                  | สร้าง PoC หลังจากเข้าใจ Logic แล้ว   |
+ขั้นตอนแรกคือการใช้งานระบบตามปกติ
 
-สิ่งสำคัญคือ Python ไม่ใช่จุดเริ่มต้นของงานนี้
+จากนั้นจึงค่อยตรวจสอบ HTTP Traffic
 
-ผมเริ่มจากการทำความเข้าใจ Protocol และ State ของระบบก่อน
+เครื่องมือที่ใช้ ได้แก่
 
----
+| Tool                    | หน้าที่                                  |
+| ----------------------- | ---------------------------------------- |
+| Browser Developer Tools | ตรวจสอบ Request / Response               |
+| Burp Suite              | Intercept และวิเคราะห์ HTTP Traffic      |
+| Postman                 | Replay Request และปรับ Parameter ด้วยมือ |
+| Notepad                 | จด Endpoint, Parameter และพฤติกรรม       |
+| Python                  | ทำ Automation หลังเข้าใจ Logic แล้ว      |
 
-# จุดเริ่มต้น
-
-ผมเริ่มจากการเปิดบทเรียนและใช้งานระบบตามปกติ
-
-จากนั้นเปิด Network Inspector และสังเกตว่า Browser ติดต่อกับ Backend อย่างไร
-
-แนวทางคร่าว ๆ คือ
-
-```text
-Browser
-   │
-   │ HTTP Request
-   ▼
-Backend API
-   │
-   │ JSON Response
-   ▼
-Browser
-```
-
-ผมเริ่มจดว่า Request แต่ละตัวประกอบด้วยข้อมูลอะไรบ้าง และ Server ส่งข้อมูลอะไรกลับมา
-
-จากนั้นจึงนำ Request ที่เกี่ยวข้องกับ Learning Progress ไปศึกษาต่อด้วย Burp Suite และ Postman
-
----
-
-# วิธีการทดสอบ
-
-Workflow ที่ผมใช้จริงโดยรวมคือ
+Workflow โดยรวม:
 
 ```mermaid
 flowchart TD
 
     A[ใช้งานระบบตามปกติ]
-    --> B[ตรวจสอบ Network Request]
+    --> B[ดู Network Traffic]
 
-    B --> C[Intercept / Inspect ด้วย Burp Suite]
+    B --> C[Inspect / Intercept ด้วย Burp Suite]
 
     C --> D[บันทึก Endpoint และ Parameter]
 
-    D --> E[นำ Request มาทดลองใน Postman]
+    D --> E[นำ Request ไปทดลองด้วย Postman]
 
     E --> F[Replay Request เดิม]
 
-    F --> G[เปลี่ยน Parameter ทีละค่า]
+    F --> G[เปลี่ยน Parameter ทีละตัว]
 
-    G --> H[ตรวจสอบ Response]
+    G --> H[ดู Response]
 
-    H --> I[เปรียบเทียบพฤติกรรม]
+    H --> I[หา Validation Rule]
 
-    I --> J[หา Validation Rule]
+    I --> J[ทดสอบ Boundary Condition]
 
-    J --> K[ทดสอบ Boundary Condition]
+    J --> K[พบ Business Logic Weakness]
 
-    K --> L[พบ Business Logic Weakness]
-
-    L --> M[สร้าง PoC หลังเข้าใจ Root Cause]
+    K --> L[สร้าง PoC ใน Environment ที่ควบคุมได้]
 ```
 
-ผมมองว่าวิธีนี้สำคัญกว่าการเริ่มจากเขียน Script ทันที
-
-เพราะเป้าหมายไม่ใช่เพียง
-
-> "ทำยังไงให้ Bypass ได้"
-
-แต่คือ
-
-> "ทำไม Server ถึงยอมรับ State แบบนี้?"
+วิธีนี้ทำให้ผมเข้าใจว่า Vulnerability เกิดขึ้นเพราะอะไร ไม่ใช่เพียงเห็นว่า Script ทำงานได้
 
 ---
 
 # Finding 1 — Client-Exposed API Credential
 
-หนึ่งในสิ่งแรกที่ผมสังเกตเห็นจาก HTTP Request คือมีค่าที่มีลักษณะเป็น `ApiKey` ถูกส่งมากับ Request
+ระหว่างตรวจสอบ HTTP Request ผมพบค่าที่มีลักษณะเป็น API Credential ถูกส่งจาก Client ไปยัง Backend
 
 ตัวอย่างแบบ Sanitized:
 
@@ -173,152 +183,132 @@ flowchart TD
 {
   "ApiKey": "[REDACTED]",
   "student_id": "[REDACTED]",
-  "quiz_set_id": "[REDACTED]"
+  "resource_id": "[REDACTED]"
 }
 ```
 
-ขอเน้นว่าผม **ไม่ได้พบ API Key นี้จาก Public Repository ของผู้พัฒนา**
+ขอชี้แจงว่า Credential นี้ **ไม่ได้ถูกพบจาก Public Repository ของผู้พัฒนา**
 
-ผมพบมันระหว่างตรวจสอบ Request ที่ Client ติดต่อกับ Backend และนำ Request ดังกล่าวมาศึกษาต่อผ่าน Postman/Burp Suite
-
-ตรงนี้ทำให้ผมเริ่มตั้งคำถามว่า
-
-> API Key ตัวนี้มีหน้าที่อะไร?
-
-และ
-
-> Backend ใช้มันเป็น Security Boundary มากแค่ไหน?
+ผมพบระหว่างตรวจสอบ HTTP Request และนำ Request ดังกล่าวมาศึกษาต่อผ่าน Postman และ Burp Suite
 
 ---
 
-## API Key ที่ Client เห็น ไม่ได้แปลว่าเป็นช่องโหว่ทันที
+## Client-visible API Key ไม่ได้แปลว่าเป็นช่องโหว่ทันที
 
-ตรงนี้ผมคิดว่าควรให้ความเป็นธรรมกับ Architecture ของระบบ
+ตรงนี้ควรแยกให้ชัดเจน
 
-การที่ API Key ปรากฏใน Client Request ไม่ได้หมายความว่าเป็น Critical Vulnerability โดยอัตโนมัติ
+การที่ API Key สามารถมองเห็นจาก Client ไม่ได้หมายความว่าเป็น Secret Leak โดยอัตโนมัติ
 
-Credential บางประเภทถูกออกแบบมาให้ Client สามารถมองเห็นได้อยู่แล้ว
+บางระบบมี Application Key ที่ตั้งใจให้ Client ใช้งาน
 
-ตัวอย่าง Architecture ที่สามารถมี Client Key ได้:
-
-```text
-Public Client
-     │
-     │ Application Key
-     ▼
-Backend
-     │
-     ├── Authentication
-     ├── Authorization
-     ├── Ownership Validation
-     └── Rate Limiting
-```
-
-ในกรณีนี้ Key อาจใช้เพียงระบุว่า Request มาจาก Application ใด
-
-ปัญหาจะเกิดขึ้นหาก Architecture กลายเป็น
+Architecture ที่ยอมรับได้อาจเป็น
 
 ```text
-Public Client
-     │
-     │ Client-visible Key
-     ▼
+Client
+   │
+   │ Application Key
+   ▼
 Backend
-     │
-     └── Trust Request
+   │
+   ├── Authentication
+   ├── Authorization
+   ├── Ownership Validation
+   ├── Rate Limiting
+   └── Business Logic Validation
 ```
 
-ดังนั้นผมเลือกเรียกสิ่งที่พบว่า
+ปัญหาจะเกิดขึ้นเมื่อ Key ดังกล่าวกลายเป็น Security Boundary หลัก
 
-**Client-Exposed API Credential**
+```text
+Client
+   │
+   │ Client-visible Credential
+   ▼
+Backend
+   │
+   └── Trust Request
+```
 
-แทนการสรุปทันทีว่าเป็น Secret Key Leak
+ดังนั้นผมเลือกเรียกประเด็นนี้ว่า
 
-สิ่งสำคัญกว่าคือการตรวจสอบว่า Backend มี Authentication และ Authorization ชั้นอื่นรองรับหรือไม่
+> **Client-Exposed API Credential**
+
+แทนที่จะสรุปว่าเป็น Credential Leak โดยทันที
 
 ---
 
-# Finding 2 — Student Identifier และ Authorization
+# Finding 2 — User-Supplied Student Identifier
 
-อีกค่าที่น่าสนใจคือ `student_id`
+อีก Parameter ที่ควรระวังคือ Identifier ของนักศึกษา
 
-ในระบบที่เกี่ยวข้องกับข้อมูลผู้เรียน สิ่งสำคัญคือ Backend ต้องแยกให้ออกระหว่าง
-
-```text
-Identity
-```
-
-กับ
+หลักการสำคัญคือ
 
 ```text
-User-supplied Identifier
+Identifier != Identity
 ```
 
-Server ไม่ควรตีความว่า
+Server ไม่ควรคิดว่า
 
 ```text
 Client ส่ง student_id = X
             ↓
-Client คือเจ้าของ Student X
+Client เป็น Student X
 ```
 
-เพราะการรู้ Identifier ของ Resource ไม่ได้พิสูจน์ Ownership
+เพียงเพราะ Client รู้ Identifier
 
-แนวคิดที่ปลอดภัยกว่าคือ
+แนวทางที่ปลอดภัยกว่าคือ
 
-```text
-Authentication Token
-        │
-        ▼
-Server verifies identity
-        │
-        ▼
-Authenticated User
-        │
-        ▼
-Server resolves Student Record
+```mermaid
+flowchart TD
+
+    A[Client Authentication]
+    --> B[Server verifies token]
+
+    B --> C[Authenticated User]
+
+    C --> D[Server resolves Student Record]
+
+    D --> E[Authorization Check]
+
+    E --> F[Access Resource]
 ```
 
-หรืออย่างน้อย Backend ต้องตรวจสอบว่า
+กล่าวคือ Backend ควรผูกข้อมูลกับ Identity ที่ได้รับจาก Authentication Context
 
-```text
-Authenticated User
-        │
-        ▼
-มีสิทธิ์เข้าถึง Student Record นี้หรือไม่?
-```
-
-ก่อนดำเนินการกับข้อมูล
+ไม่ใช่เชื่อ Identifier ที่ Client ส่งมาเพียงอย่างเดียว
 
 ---
 
-# Finding 3 — Video Progress Logic
+# Finding 3 — Video Progress Integrity
 
-นี่คือส่วนที่ผมมองว่าน่าสนใจที่สุด
+จุดที่ทำให้ผมสนใจระบบนี้มากขึ้นคือ Logic ป้องกันการข้าม Video Progress
 
-จากการทดลองพบว่าระบบมี Logic ป้องกันการ Skip Video อยู่แล้ว
+จากการทดลอง พบว่าระบบมีการตรวจสอบการกระโดดของตำแหน่งวิดีโอ
 
-ตัวอย่างเชิงแนวคิด:
+ตัวอย่าง:
 
 ```text
-Current Position
-
-5 seconds
-    │
-    │ suddenly reports
-    ▼
-10000 seconds
+Current Position = 5 seconds
 ```
 
-Server สามารถตรวจจับได้ว่าการกระโดดดังกล่าวผิดปกติ
+หาก Client รายงานทันทีว่า
 
-ตรงนี้ผมขอให้เครดิตผู้พัฒนาระบบ เพราะแสดงว่ามีการคิดเรื่อง Client Manipulation และ Video Skipping เอาไว้แล้ว
+```text
+Current Position = 10000 seconds
+```
 
-แต่หลังจากทดลอง Boundary Condition เพิ่มเติม ผมพบคำถามอีกข้อหนึ่ง
+Backend สามารถตรวจจับพฤติกรรมที่ผิดปกติได้
 
-> ถ้าไม่ได้กระโดดทีเดียว แต่ Progress เพิ่มขึ้นทีละน้อยล่ะ?
+นี่ถือเป็น Security Control ที่ดี
 
-ตัวอย่างเชิงแนวคิด:
+แต่สิ่งที่น่าสนใจคือ Boundary Condition
+
+---
+
+## Position Validation
+
+สมมติ Progress เพิ่มเป็น
 
 ```text
 5
@@ -327,105 +317,68 @@ Server สามารถตรวจจับได้ว่าการกร�
 20
 25
 30
-...
 ```
 
-Request แต่ละตัวเมื่อมองแยกกันอาจดูสมเหตุสมผล
-
-เพราะ
+เมื่อดูแต่ละ Request แยกกัน
 
 ```text
 5 → 10
+10 → 15
+15 → 20
+20 → 25
+25 → 30
 ```
 
-ไม่ได้เป็นการกระโดดแบบ
+แต่ละช่วงอาจดูสมเหตุสมผล
 
-```text
-5 → 10000
-```
+ปัญหาคือยังมีอีกตัวแปรหนึ่งที่ต้องนำมาพิจารณา
 
-แต่ยังมีอีก Dimension ที่ต้องตรวจสอบ นั่นคือ **เวลา**
+> **เวลา**
 
 ---
 
-# Root Cause
+# Root Cause — Position Is Not Time
 
-สมมติ Client รายงาน
+สมมติ Client รายงานว่า Progress เพิ่มขึ้น 30 วินาที
+
+แต่ทั้งหมดเกิดขึ้นในเวลาเพียงเล็กน้อย
+
+Backend อาจเห็นว่า
 
 ```text
-Position 5
-Position 10
-Position 15
-Position 20
-Position 25
-Position 30
+Position Delta = Valid
 ```
 
-Server อาจมองว่า
+แต่ในความเป็นจริง
 
 ```text
-5 → 10   Valid
-10 → 15  Valid
-15 → 20  Valid
-20 → 25  Valid
-25 → 30  Valid
-```
-
-แต่สิ่งที่ต้องถามเพิ่มคือ
-
-> Request เหล่านี้เกิดขึ้นห่างกันกี่วินาที?
-
-ถ้าทั้งหมดเกิดขึ้นภายในเวลาเพียงเสี้ยววินาที
-
-Client อาจรายงานว่า
-
-```text
-30 seconds watched
-```
-
-ทั้งที่เวลาจริงอาจผ่านไปเพียง
-
-```text
-0.x seconds
+Server Time Delta = Impossible
 ```
 
 ดังนั้น
 
 ```text
 Position Validation
-        !=
+!=
 Real Watch-Time Validation
 ```
 
-นี่คือ Root Cause ที่ผมมองว่าเป็นหัวใจของปัญหา
+นี่คือ Business Logic Issue ที่สำคัญ
 
 ---
 
 # Trust Boundary
 
-ปัญหาสามารถอธิบายผ่าน Trust Boundary ได้ง่าย ๆ
+ข้อมูลประเภท
 
 ```text
-CLIENT
-────────────────────────────
-
 current_position
-video state
-progress event
-
-             │
-             │ untrusted input
-             ▼
-
-────────────────────────────
-SERVER
-
-Validation
-Database
-Completion Decision
+video_duration
+progress_state
+completion_state
 ```
 
-ข้อมูลทุกอย่างที่มาจาก Client ควรถูกมองว่าเป็น
+หากมาจาก Client ต้องถือว่าเป็น
 
 ```text
 Untrusted Input
@@ -433,244 +386,328 @@ Untrusted Input
 
 เสมอ
 
-ไม่ว่าจะมาจาก
+ไม่ว่า Client นั้นจะเป็น
 
 ```text
 Browser
-Mobile Application
 JavaScript
+Mobile Application
 Postman
-Custom Script
+Burp Suite
+Custom HTTP Client
 ```
 
-เพราะสุดท้ายแล้ว HTTP Request สามารถถูกสร้างขึ้นใหม่ได้
+เพราะ HTTP Request สามารถถูกสร้างใหม่หรือแก้ไขได้
 
 ---
 
-# Finding 4 — Watching Session
-
-อีกส่วนหนึ่งที่ผมศึกษาคือ Video Watching Session
-
-ในเชิง Concept ระบบทำงานประมาณนี้
-
-```text
-Start Watching
-      │
-      ▼
-Server Creates Session
-      │
-      ├── Progress ID
-      │
-      └── Session Token
-      │
-      ▼
-Update Progress
-      │
-      ▼
-Complete Video
-```
-
-การใช้ Session Token ถือว่าเป็นแนวทางที่ดี
-
-เพราะ Server สามารถผูก Progress Update กับ Watching Session ได้
-
-อย่างไรก็ตาม สิ่งที่ผมได้เรียนรู้คือ
-
-```text
-Valid Session Token
-        !=
-Proof of Watching
-```
-
-Session Token สามารถพิสูจน์ได้ว่า
-
-> Watching Session นี้ถูกสร้างขึ้นและ Client มี Token ที่เกี่ยวข้อง
-
-แต่ Token เพียงอย่างเดียวไม่สามารถพิสูจน์ได้ว่า
-
-> ผู้ใช้ใช้เวลารับชมจริงตามจำนวนวินาทีที่ Client รายงาน
-
-ดังนั้น Session Security และ Watch-Time Verification เป็นคนละปัญหากัน
-
----
-
-# Vulnerable Flow — Conceptual Model
-
-จากสิ่งที่ศึกษา ผมมอง Flow ของระบบเชิงแนวคิดประมาณนี้
+# Video Progress Flow
 
 ```mermaid
 flowchart TD
 
-    A[ผู้เรียนเปิดบทเรียน]
-    --> B[Client ขอข้อมูลวิดีโอ]
+    A[Student opens lesson]
+    --> B[Client loads video]
 
     B --> C[Start Watching]
 
-    C --> D[Server สร้าง Watching Session]
+    C --> D[Server creates Watch Session]
 
-    D --> E[ส่ง Progress ID และ Session Token]
+    D --> E[Return Session Context]
 
-    E --> F[Client เล่นวิดีโอ]
+    E --> F[Client plays video]
 
-    F --> G[Client รายงาน Current Position]
+    F --> G[Client reports Current Position]
 
-    G --> H{ตำแหน่งกระโดดมากเกินไปหรือไม่}
+    G --> H{Position looks plausible?}
 
-    H -- Yes --> I[Reject]
+    H -- No --> I[Reject]
 
-    H -- No --> J[Update Progress]
+    H -- Yes --> J[Update Progress]
 
-    J --> K{ถึง Completion Threshold หรือยัง}
+    J --> K{Completion threshold reached?}
 
     K -- No --> F
 
-    K -- Yes --> L[Complete Video]
+    K -- Yes --> L[Mark Completed]
 ```
 
-จุดที่ผมสนใจคือ
+จุดสำคัญอยู่ที่
+
+```text
+Client reports Current Position
+```
+
+เพราะ Client เป็นผู้ควบคุมข้อมูลดังกล่าว
+
+---
+
+# Finding 4 — Session Token Does Not Prove Watching
+
+Watching Session เป็นแนวทางที่ดี
+
+Flow โดยประมาณ:
+
+```text
+Start Watching
+      ↓
+Create Session
+      ↓
+Session Context
+      ↓
+Update Progress
+      ↓
+Complete Video
+```
+
+อย่างไรก็ตาม
+
+```text
+Valid Session
+!=
+Proof of Watching
+```
+
+Session สามารถพิสูจน์ได้ว่า Session นั้นมีอยู่
+
+แต่ไม่สามารถพิสูจน์โดยตัวมันเองว่า
+
+```text
+ผู้ใช้ใช้เวลารับชมจริง
+```
+
+---
+
+# Finding 5 — Assessment Integrity
+
+ประเด็นที่ผมมองว่าร้ายแรงกว่าการข้ามวิดีโอ คือเรื่อง **ความถูกต้องของผลการทำแบบทดสอบ**
+
+จากการศึกษาพฤติกรรมของ Quiz / Assessment Flow ผมพบว่ามี State บางส่วนเกี่ยวกับคำตอบหรือผลการประเมินไหลผ่าน Client
+
+ประเด็นสำคัญคือ
+
+> Backend ต้องเป็นผู้ตัดสินว่า Answer ถูกหรือผิดเอง
+
+ไม่ควรให้ Client เป็นผู้กำหนด Truth ของผลสอบ
+
+---
+
+# Client Must Not Decide Correctness
+
+สิ่งที่ Client ควรส่งคือประมาณ
+
+```text
+Question ID
+Selected Choice ID
+```
+
+จากนั้น Server ทำ
+
+```text
+Load Question
+      ↓
+Load Answer Key
+      ↓
+Compare Answer
+      ↓
+Calculate Score
+      ↓
+Determine Pass / Fail
+      ↓
+Store Result
+```
+
+กล่าวคือ
+
+> **Client sends answers. Server calculates truth.**
+
+---
+
+# Insecure Assessment Trust Model
+
+สิ่งที่ไม่ควรเกิดขึ้น:
 
 ```text
 Client
-   │
-   │ "ตอนนี้ผมอยู่ตำแหน่ง X"
-   ▼
-Server
+ ├── selected_answer
+ ├── is_correct
+ ├── score
+ └── pass
+        │
+        ▼
+Server trusts values
 ```
 
-เพราะ Server ต้องตัดสินใจจากข้อมูลที่ Client เป็นผู้รายงาน
+เพราะ Client-controlled value สามารถถูกแก้ไขได้
 
 ---
 
-# ทำไมเรื่องนี้ถึงมีความเสี่ยง
-
-ถ้า Video Progress เป็นเพียงข้อมูลสำหรับ
-
-> เปิดวิดีโอครั้งล่าสุดค้างไว้ตรงไหน
-
-ผลกระทบอาจไม่สูงมาก
-
-แต่ถ้า Progress ถูกนำไปใช้เป็น Security หรือ Business Requirement สำหรับ
-
-```text
-การผ่านบทเรียน
-การปลดล็อกเนื้อหา
-การเข้าสอบ
-คะแนน
-Course Completion
-Certificate
-Learning Record
-```
-
-ความสำคัญจะเปลี่ยนไปทันที
-
-เพราะ Progress ไม่ได้เป็นเพียง UX State อีกต่อไป
-
-แต่กลายเป็น
-
-```text
-Academic / Learning Record
-```
-
-ที่ต้องรักษา Integrity
-
----
-
-# ปัญหาไม่ใช่แค่ "ข้ามวิดีโอ"
-
-ผมคิดว่าถ้ามองปัญหานี้เพียงว่า
-
-> "มีวิธีข้ามวิดีโอ"
-
-จะทำให้มอง Impact แคบเกินไป
-
-ประเด็นที่สำคัญกว่าคือ
-
-> **Server สามารถเชื่อ Learning Progress ที่บันทึกไว้ได้มากแค่ไหน?**
-
-เพราะถ้า Progress สามารถถูกสร้างขึ้นโดยไม่สัมพันธ์กับเวลารับชมจริง
-
-ข้อมูลที่บอกว่า
-
-```text
-Completed = true
-```
-
-ก็อาจไม่ได้หมายความว่า
-
-```text
-User actually watched the required content
-```
-
-เสมอไป
-
-ตรงนี้จึงเป็นปัญหาเรื่อง **Data Integrity**
-
----
-
-# Attack Surface
-
-ในมุม Architecture สามารถมอง Attack Surface ได้ดังนี้
+# Secure Assessment Flow
 
 ```mermaid
-flowchart LR
+flowchart TD
 
-    U[Browser / Client]
-    -->|HTTP Request| API[Backend API]
+    A[Student selects answer]
+    --> B[Client sends Question ID + Choice ID]
 
-    API --> AUTH[Authentication / Authorization]
+    B --> C[Authenticated Assessment API]
 
-    AUTH --> LOGIC[Video Progress Logic]
+    C --> D[Verify Exam Attempt]
 
-    LOGIC --> DB[(Learning Database)]
+    D --> E[Server loads Answer Key]
 
-    U -. Client-controlled data .-> LOGIC
+    E --> F[Compare Selected Answer]
+
+    F --> G[Calculate Score Server-side]
+
+    G --> H[Evaluate Passing Rule]
+
+    H --> I[Store Assessment Result]
+
+    I --> J[Return Result]
 ```
-
-จุดสำคัญคือ Backend ต้องไม่ถือว่า Client Application ที่ถูกต้องจะส่งข้อมูลที่ถูกต้องเสมอ
-
-เพราะ Client สามารถถูกแทนที่ได้ด้วย HTTP Client อื่น
 
 ---
 
-# สิ่งที่ควรตรวจสอบเพิ่มเติม
+# Why Assessment Integrity Matters
 
-ในระบบลักษณะนี้ ผมคิดว่า Backend ควรตรวจสอบอย่างน้อย
+Video Progress ที่ผิดอาจทำให้ Learning Record ไม่ถูกต้อง
+
+แต่ Assessment Result ที่ถูก Manipulate ส่งผลโดยตรงกับ
 
 ```text
-Authentication
-Authorization
-Session Ownership
-Lesson Ownership
-Position Delta
-Server Time Delta
-Request Frequency
-Session Expiration
-Completion Requirement
-Replay Detection
+คะแนนสอบ
+ผลผ่าน / ไม่ผ่าน
+การปลดล็อกบทเรียน
+Eligibility
+Course Completion
+Certificate
+Academic Reporting
 ```
 
-แต่ละ Layer แก้ปัญหาคนละประเภท
+ดังนั้น Impact ไม่ได้อยู่แค่
+
+> "มีคนโกงข้อสอบได้"
+
+แต่คือ
+
+> **ระบบสามารถรับรองได้หรือไม่ว่าคะแนนที่บันทึกอยู่เป็นคะแนนที่ Backend คำนวณจากคำตอบจริง**
+
+นี่คือปัญหาด้าน **Integrity**
 
 ---
 
-# แนวทางแก้ไขที่ผมเสนอ
+# CIA Triad
 
-แนวคิดหลักคือ
-
-> อย่าให้ Client เป็นคนตัดสิน Learning State
-
-Client ควรมีหน้าที่เพียงรายงาน Event
+Security มักแบ่งเป็น
 
 ```text
-Client reports events.
-Server decides state.
+Confidentiality
+Integrity
+Availability
+```
+
+กรณีที่งานวิจัยนี้เน้นมากที่สุดคือ
+
+```text
+Integrity
+```
+
+โดยเฉพาะ
+
+```text
+Learning Record Integrity
+Assessment Integrity
+Completion Integrity
 ```
 
 ---
 
-# Server-Side Watch Session
+# Potential Impact
 
-เมื่อเริ่มวิดีโอ Server สามารถสร้าง Watch Session และเก็บข้อมูล เช่น
+หาก Findings เหล่านี้ได้รับการยืนยันใน Production Environment ผลกระทบอาจรวมถึง
+
+```text
+False Video Completion
+Incorrect Learning Progress
+Incorrect Examination Score
+False Pass / Fail Result
+Unauthorized Course Completion
+Invalid Certificate Eligibility
+Corrupted Learning Record
+Unreliable Reporting
+Loss of Trust in Assessment Data
+```
+
+---
+
+# Severity Overview
+
+| Finding                               | Estimated Severity |
+| ------------------------------------- | ------------------ |
+| Client-exposed application credential | Medium             |
+| Weak ownership validation             | High               |
+| Client-controlled progress state      | High               |
+| Missing watch-time correlation        | High               |
+| Weak completion validation            | High / Critical    |
+| Client-influenced assessment result   | Critical           |
+| Server not recalculating correctness  | Critical           |
+
+> หมายเหตุ: Severity จริงควรได้รับการประเมินโดยผู้ดูแลระบบหลังตรวจสอบ Backend Implementation และ Authorization Model
+
+---
+
+# Core Security Problem
+
+ทั้ง Video Progress และ Assessment Result มี Root Cause คล้ายกัน
+
+คือ
+
+> **Server เชื่อ Client-controlled State มากเกินไป**
+
+ตัวอย่าง:
+
+```text
+Client says:
+"I watched 30 seconds"
+
+Server:
+"Okay"
+```
+
+หรือ
+
+```text
+Client says:
+"This answer is correct"
+
+Server:
+"Okay"
+```
+
+สิ่งที่ปลอดภัยกว่าคือ
+
+```text
+Client:
+"I am reporting this event"
+
+Server:
+"I will verify and decide the state myself"
+```
+
+---
+
+# Recommended Secure Architecture
+
+หลักสำคัญคือ
+
+> **Client reports events. Server decides state.**
+
+---
+
+# Secure Video Watch Session
+
+Server สามารถเก็บ State เช่น
 
 ```text
 watch_session_id
@@ -680,12 +717,12 @@ started_at
 last_heartbeat_at
 last_position
 verified_watch_time
-max_position
-status
+maximum_position
 expires_at
+status
 ```
 
-โดยเฉพาะ
+โดยเวลาอย่าง
 
 ```text
 started_at
@@ -694,25 +731,13 @@ last_heartbeat_at
 
 ควรมาจาก Server Clock
 
-ไม่ใช่เวลาที่ Client ส่งมา
-
 ---
 
-# Heartbeat Validation
+# Progress Heartbeat Validation
 
-Client สามารถส่ง Heartbeat เป็นระยะ
+เมื่อ Client ส่ง Progress Update
 
-ตัวอย่าง Concept:
-
-```text
-Client
-   │
-   │ position = X
-   ▼
-Server
-```
-
-เมื่อ Server ได้รับ Request ให้คำนวณ
+Server สามารถคำนวณ
 
 ```text
 server_elapsed =
@@ -726,227 +751,245 @@ position_delta =
     current_position - last_position
 ```
 
-จากนั้นเปรียบเทียบ
+จากนั้นตรวจสอบ
 
 ```text
-Position Delta
-        vs
-Server Elapsed Time
+position_delta
+vs
+server_elapsed
 ```
 
 ---
 
-# ตัวอย่าง
+# Example Validation Concept
 
-สมมติ
-
-```text
-previous_position = 10
-current_position  = 20
-```
-
-ดังนั้น
+ตัวอย่าง:
 
 ```text
-position_delta = 10 seconds
+Previous Position: 10 seconds
+Current Position:  20 seconds
+
+Position Delta:    10 seconds
+Server Elapsed:    0.1 seconds
 ```
 
-แต่ Server พบว่า
+กรณีนี้ Progress ไม่สมเหตุสมผล
+
+และสามารถ
 
 ```text
-server_elapsed = 0.1 seconds
+Reject
+Throttle
+Log
+Flag
 ```
 
-หมายความว่า Client อ้างว่า Video Progress เพิ่มขึ้น 10 วินาที ทั้งที่เวลาจริงผ่านไปเพียง 0.1 วินาที
-
-นี่คือพฤติกรรมที่ Server สามารถ Flag ได้
+ได้
 
 ---
 
-# Secure Flow ที่เสนอ
+# Server-Owned Video Metadata
 
-```mermaid
-flowchart TD
-
-    A[User Starts Video]
-    --> B[Server Creates Watch Session]
-
-    B --> C[Store Server Started Time]
-
-    C --> D[Client Plays Video]
-
-    D --> E[Client Sends Heartbeat]
-
-    E --> F[Server Calculates Elapsed Time]
-
-    F --> G[Calculate Position Delta]
-
-    G --> H[Compare Position Delta vs Time Delta]
-
-    H --> I{Progress Plausible?}
-
-    I -- No --> J[Reject / Security Event]
-
-    I -- Yes --> K[Update Verified Watch Time]
-
-    K --> L{Enough Verified Watch Time?}
-
-    L -- No --> D
-
-    L -- Yes --> M[Allow Completion]
-```
-
----
-
-# Server-Side Video Metadata
-
-อีกเรื่องที่สำคัญคือข้อมูลอย่าง Video Duration
-
-หากข้อมูลนี้มีผลต่อ Completion Decision Server ควรมี Source of Truth ของตัวเอง
-
-ตัวอย่าง
+ข้อมูลอย่าง
 
 ```text
-Database
-
-lesson_id
-video_id
 video_duration
 required_watch_percentage
+completion_threshold
 ```
 
-Client สามารถใช้ Duration สำหรับ UI ได้
+ควรมี Source of Truth ฝั่ง Server
 
-แต่ตอนตัดสิน Completion ควรใช้
+Client สามารถใช้ข้อมูลสำหรับ UI
 
-```text
-Server-known duration
-```
-
-แทน
-
-```text
-Client-provided duration
-```
+แต่ Completion Decision ควรคำนวณจากข้อมูลที่ Server เชื่อถือได้
 
 ---
 
 # Completion Validation
 
-การ Complete Video ไม่ควรตัดสินจากเพียง
+ไม่ควรตัดสินเพียง
 
 ```text
-current_position >= video_duration
+current_position >= duration
 ```
 
-เพียงอย่างเดียว
-
-สามารถพิจารณาร่วมกันหลายเงื่อนไข เช่น
+ควรพิจารณา
 
 ```text
-Valid Authentication
-        +
-Valid Authorization
-        +
-Valid Watch Session
-        +
+Authenticated User
++
+Authorized Lesson
++
+Valid Session
++
 Verified Watch Time
-        +
-Maximum Watched Position
-        +
-Completion Threshold
++
+Server-known Duration
++
+Completion Requirement
 ```
 
-แล้วจึง
+จากนั้น Server จึงเปลี่ยน State เป็น Completed
+
+---
+
+# Secure Assessment Architecture
+
+สำหรับแบบทดสอบ Server ควรถือ Answer Key เอง
 
 ```text
-Allow Completion
+Client Answer
+      ↓
+Authenticated API
+      ↓
+Active Attempt Validation
+      ↓
+Server Answer Key
+      ↓
+Server Scoring
+      ↓
+Immutable Result
+```
+
+Client ไม่ควรมี Authority ในการตัดสิน
+
+```text
+is_correct
+score
+passed
 ```
 
 ---
 
-# Rate Limiting
+# Do Not Expose Answer Key Prematurely
 
-Progress Endpoint สามารถมี Rate Limit ต่อ
+ถ้า Client ได้รับ Correct Answer ก่อนการส่งคำตอบจริง จะทำให้ Trust Model อ่อนแอลงมาก
 
-```text
-User
-Session
-Lesson
-IP / Device Context
-```
+ดังนั้นข้อมูลที่ Client ต้องใช้ในการ Render Question ควรแยกจากข้อมูลที่ใช้ตรวจคำตอบ
 
-ถ้า Session หนึ่งส่ง Progress Update จำนวนผิดปกติในเวลาสั้นมาก ระบบสามารถ
+ตัวอย่าง:
 
 ```text
-Reject
-Throttle
-Flag
-Log
+Client receives:
+
+question_id
+question_text
+choice_id
+choice_text
 ```
 
-ได้
+แต่ไม่ควรได้รับ
 
-Rate Limiting ไม่ควรเป็นการป้องกันเพียงอย่างเดียว แต่เป็น Defense in Depth ที่มีประโยชน์
+```text
+correct_choice
+answer_key
+server_score_rule
+```
+
+ก่อนสิ้นสุด Attempt
+
+---
+
+# Attempt Binding
+
+การ Submit Answer ควรถูกผูกกับ
+
+```text
+Authenticated User
+Exam ID
+Attempt ID
+Question ID
+Server Session
+Expiration
+```
+
+เพื่อป้องกันการ Replay หรือใช้ Request ข้าม Context
 
 ---
 
 # Replay Protection
 
-สำหรับระบบที่ต้องการ Integrity สูงขึ้น สามารถพิจารณา
+สามารถใช้กลไก เช่น
 
 ```text
 sequence_number
 nonce
 timestamp
-session binding
+attempt state
+idempotency key
 ```
 
-เพื่อให้ Server ตรวจสอบลำดับของ Event
+ตามความเหมาะสม
+
+---
+
+# Rate Limiting
+
+Progress และ Assessment Endpoint ควรมี Rate Limit
 
 เช่น
 
 ```text
-sequence 100
-      ↓
-sequence 101
-      ↓
-sequence 102
+Per User
+Per Session
+Per Attempt
+Per Resource
 ```
 
-Request เก่าที่ถูก Replay ซ้ำสามารถถูกตรวจจับได้ง่ายขึ้น
+เพื่อช่วยลด Automated Abuse
+
+แต่ Rate Limit ไม่ควรใช้แทน Business Logic Validation
 
 ---
 
 # Security Monitoring
 
-ผมคิดว่าระบบสามารถตรวจจับ Pattern ที่ผิดปกติได้ เช่น
+Event ที่อาจควร Flag:
 
 ```text
-Progress เพิ่มเร็วกว่าระยะเวลาจริงมาก
+Video progresses faster than real time
 
-Heartbeat ถี่ผิดปกติ
+Completion immediately after session creation
 
-Complete หลัง Start Session เร็วเกินไป
+Unusually high progress request frequency
 
-สร้าง Watching Session จำนวนมาก
+Repeated assessment submission
 
-Session ถูกใช้กับ Lesson ที่ไม่ตรงกัน
+Duplicate answer submission
 
-User / Student Ownership ไม่ตรงกัน
+Impossible scoring transitions
 
-Session Token ถูกใช้ผิด Context
+Student identity mismatch
+
+Session context mismatch
+
+Token reuse
+
+Multiple concurrent attempts with impossible timing
 ```
 
-เหตุการณ์เหล่านี้ไม่จำเป็นต้อง Block ทุกครั้ง
+---
 
-บางกรณีสามารถเก็บเป็น
+# Security Event Logging
+
+สำหรับระบบที่ข้อมูลมีผลต่อผลการเรียน ควรมี Audit Trail เช่น
 
 ```text
-Security Event
+user_id
+student_id
+resource_id
+attempt_id
+watch_session_id
+event_type
+server_timestamp
+source_ip
+user_agent
+validation_result
+reason
 ```
 
-เพื่อให้ผู้ดูแลตรวจสอบย้อนหลัง
+โดยคำนึงถึง Privacy และ Data Retention Policy ด้วย
 
 ---
 
@@ -955,207 +998,169 @@ Security Event
 ```mermaid
 flowchart LR
 
-    USER[Student]
+    STUDENT[Student]
     --> CLIENT[Web Client]
 
     CLIENT --> AUTH[Authentication]
 
     AUTH --> API[Backend API]
 
-    API --> WATCH[Watch Session Service]
+    API --> AUTHZ[Authorization]
 
-    WATCH --> VALIDATOR[Progress Validator]
+    AUTHZ --> VIDEO[Video Progress Service]
 
-    VALIDATOR --> TIME[Server Clock]
+    AUTHZ --> EXAM[Assessment Service]
 
-    VALIDATOR --> META[Server Video Metadata]
+    VIDEO --> CLOCK[Server Clock]
 
-    VALIDATOR --> DB[(Learning Records)]
+    VIDEO --> META[Video Metadata]
 
-    VALIDATOR --> SECURITY[Security Events]
+    VIDEO --> DB[(Learning Records)]
+
+    EXAM --> KEY[Server Answer Key]
+
+    EXAM --> SCORE[Server-side Scoring]
+
+    SCORE --> DB
+
+    VIDEO --> LOG[Security Events]
+
+    EXAM --> LOG
 ```
 
-หลักการคือให้ Backend มีข้อมูลเพียงพอที่จะตัดสินเอง
+---
 
-แทนที่จะถาม Client ว่า
+# Main Security Principles
 
-> "คุณดูไปกี่วินาทีแล้ว?"
+จากงานนี้ ผมได้สรุปหลักการสำคัญไว้ดังนี้
 
-แล้วเชื่อคำตอบโดยตรง
+```text
+API Key != Authentication
+```
+
+```text
+Student ID != Authorization
+```
+
+```text
+Session Token != Proof of Watching
+```
+
+```text
+Position Validation != Watch-Time Validation
+```
+
+```text
+Client Progress != Trusted Progress
+```
+
+```text
+Client-provided Correctness != Correct Answer
+```
+
+```text
+Client-calculated Score != Trusted Score
+```
 
 ---
 
 # สิ่งที่ผมได้เรียนรู้
 
-ตอนเริ่มศึกษา ผมสนใจแค่ว่า
-
-> ระบบป้องกันการข้ามวิดีโออย่างไร?
-
-แต่หลังจากไล่ Request ทีละส่วน ผมพบว่าสิ่งที่น่าสนใจกว่าคือเรื่อง **Trust**
-
-Security ไม่ได้มีเพียง
+ตอนแรกผมคิดว่า Security ของระบบ Web จะเกี่ยวกับเรื่องอย่าง
 
 ```text
-Encryption
-HTTPS
-API Key
+SQL Injection
+XSS
+Authentication Bypass
 Token
-Authentication
-Firewall
+Encryption
 ```
 
-เท่านั้น
+เป็นหลัก
 
-ระบบสามารถมีสิ่งเหล่านี้ครบและยังเกิด Business Logic Vulnerability ได้
+แต่โปรเจกต์นี้ทำให้ผมเข้าใจชัดขึ้นว่า
 
-เพราะคำถามอีกข้อหนึ่งคือ
+**Business Logic Security สำคัญไม่แพ้ Technical Vulnerability**
 
-> Server เชื่อข้อมูลอะไรจาก Client บ้าง?
+ระบบอาจไม่มี SQL Injection
+
+ระบบอาจใช้ HTTPS
+
+ระบบอาจมี Token
+
+ระบบอาจมี Session
+
+และทุก Endpoint สามารถ Response ได้ตามปกติ
+
+แต่ก็ยังมี Vulnerability ได้ ถ้า Backend เชื่อ State จาก Client มากเกินไป
 
 ---
 
-# Security Boundary
+# สิ่งที่สำคัญที่สุด
 
-สิ่งที่ผมได้เรียนรู้จากงานนี้สามารถสรุปได้ว่า
+จากทั้งหมดนี้ ผมคิดว่าประโยคที่อธิบายงานนี้ได้ดีที่สุดคือ
 
-```text
-API Key
-!=
-User Authentication
-```
+> **Never trust client-controlled state.**
 
-```text
-Student Identifier
-!=
-Authorization
-```
+และถ้าจะอธิบายในรูปแบบ Architecture:
 
-```text
-Valid Session Token
-!=
-Proof of Watching
-```
+> **Client reports events. Server decides state.**
 
-```text
-Valid Position Increment
-!=
-Valid Watch Time
-```
+สำหรับ Assessment:
 
-และ
-
-```text
-Client-reported State
-!=
-Trusted State
-```
-
----
-
-# ถึงผู้พัฒนาระบบ
-
-ถ้าผู้พัฒนาหรือผู้ดูแลระบบมาเจอ Repository นี้ ผมอยากบอกตรงนี้ว่าผมไม่ได้มีเจตนาจะโจมตี ดูถูก หรือด้อยค่าผลงานครับ
-
-ในฐานะคนที่เขียน Software เหมือนกัน ผมเข้าใจดีว่าการทำระบบจริงมีรายละเอียดมากกว่าที่คนภายนอกเห็นเยอะมาก
-
-และจากที่ผมทดลอง ผมเห็นว่าระบบมีการคิดเรื่อง Security อยู่แล้ว
-
-โดยเฉพาะการมี Watching Session และ Logic ที่พยายามตรวจจับการกระโดดของ Video Progress
-
-ดังนั้นผมไม่ได้มองว่า
-
-> "ผู้พัฒนาไม่ได้ป้องกันอะไรเลย"
-
-ในทางกลับกัน สิ่งที่ทำให้ผมสนใจระบบนี้มากขึ้นก็คือ **มันมีการป้องกันอยู่แล้ว แต่ผมพบ Edge Case ที่สามารถผ่านแนวคิดการป้องกันนั้นได้**
-
-นี่เป็นหนึ่งในเหตุผลที่ Business Logic Security น่าสนใจมากสำหรับผม
-
-เพราะบางครั้งระบบ
-
-```text
-ไม่ Error
-ไม่ Crash
-ไม่มี SQL Injection
-ไม่มี XSS
-Authentication ยังทำงาน
-```
-
-แต่ State ที่ระบบเชื่ออาจยังถูก Manipulate ได้
-
-ผมเองก็ยังเป็นนักศึกษาและยังมีอีกหลายเรื่องที่ต้องเรียนรู้ ดังนั้นสิ่งที่เขียนใน Repository นี้ควรถูกมองเป็นผลการศึกษาและข้อสังเกตจากมุมของผม ไม่ใช่การตัดสินคุณภาพของทีมพัฒนาทั้งระบบ
-
-ถ้าสิ่งที่ผมพบสามารถช่วยให้ทีมผู้พัฒนาตรวจสอบและทำให้ระบบแข็งแรงขึ้นได้ ผมถือว่าโปรเจกต์นี้มีประโยชน์มากกว่าการแสดงเพียงว่า "ผม Bypass ได้"
-
----
-
-# ทำไมผมคิดว่าควรแก้
-
-ถึงแม้ผมจะให้เกียรติการออกแบบและผู้พัฒนาระบบ แต่ผมก็คิดว่าควรพูดตรงไปตรงมาว่า **ถ้าพฤติกรรมที่ผมพบสามารถเกิดขึ้นใน Production ได้จริง ปัญหานี้มีความเสี่ยงและไม่ควรถูกมองข้าม**
-
-โดยเฉพาะเมื่อระบบเกี่ยวข้องกับการศึกษา
-
-ถ้า Video Completion เชื่อมโยงกับ
-
-```text
-Learning Progress
-Course Completion
-Exam Eligibility
-Score
-Certificate
-Official Record
-```
-
-การ Bypass Progress จะไม่ได้กระทบแค่ Video Player
-
-แต่สามารถกระทบความน่าเชื่อถือของข้อมูลที่อยู่หลัง Video Player ได้
-
-ดังนั้นสิ่งที่ควรปกป้องจริง ๆ คือ
-
-> **Integrity ของ Learning Record**
+> **Client sends answers. Server calculates truth.**
 
 ---
 
 # Responsible Disclosure
 
-Repository นี้จัดทำขึ้นเพื่อ
+ผมตั้งใจให้ Repository นี้เป็น
 
 ```text
-Education
 Security Research
 Defensive Security
-Software Architecture Learning
+Educational Material
+Architecture Analysis
 Responsible Disclosure
 ```
 
-ไม่ใช่เพื่อสนับสนุนการโจมตีระบบจริง
+ไม่ใช่เครื่องมือสำหรับโจมตี Production System
 
-ข้อมูลที่สามารถนำไปใช้กับ Production โดยตรงไม่ควรถูกเผยแพร่ใน README เช่น
+ดังนั้นข้อมูลที่สามารถนำไปใช้โจมตีระบบได้ทันทีควรถูก Redact
+
+เช่น
 
 ```text
-API Credential จริง
-Student ID จริง
-เลขบัตรประชาชน
-Session Token จริง
+Real API Key
+Student Identifier
+National ID
+Session Token
 Authentication Cookie
 Access Token
-Reusable Production Payload
+Production Endpoint Payload
+Reusable Exploit Request
 ```
-
-ตัวอย่างทางเทคนิคในเอกสารจึงควรใช้
-
-```text
-[REDACTED]
-```
-
-หรือข้อมูลจำลองแทน
 
 ---
 
-# เกี่ยวกับข้อมูลส่วนบุคคล
+# Credential Disclosure
 
-โดยเฉพาะ `student_id` หากมีความสัมพันธ์กับเลขประจำตัวประชาชนหรือข้อมูลที่สามารถระบุตัวบุคคลได้ ผมคิดว่าควรระมัดระวังเป็นพิเศษ
+หาก Credential ใดเคยถูกเผยแพร่โดยไม่ตั้งใจ ควรพิจารณา
 
-ถึงแม้ค่าดังกล่าวจะปรากฏใน Request ของบัญชีที่ใช้ทดสอบเอง ก็ไม่ควรนำค่าจริงไปเผยแพร่ใน Public Documentation
+```text
+Rotate Credential
+Invalidate Session
+Review Access Logs
+Audit Historical Requests
+```
+
+การลบ Credential ออกจาก README อย่างเดียวอาจไม่เพียงพอ หากค่าดังกล่าวเคยถูก Commit ลง Git History
+
+---
+
+# Personal Data
+
+ข้อมูลนักศึกษา โดยเฉพาะข้อมูลที่สามารถเชื่อมโยงถึงบุคคลจริง ไม่ควรถูกนำมาใช้ใน Public PoC
 
 ตัวอย่าง:
 
@@ -1165,68 +1170,40 @@ Reusable Production Payload
 }
 ```
 
-เพียงเท่านี้ก็สามารถอธิบายช่องโหว่ได้โดยไม่จำเป็นต้องเปิดเผยข้อมูลจริง
+เพียงเท่านี้ก็เพียงพอสำหรับการอธิบาย Security Issue
 
 ---
 
-# Scope ของ Repository
+# About the PoC
 
-Repository นี้ควรใช้สำหรับการอธิบาย
+ผมได้สร้าง Automation หลังจากเข้าใจพฤติกรรมของระบบผ่านการทดสอบด้วยมือแล้ว
 
-```text
-Research methodology
-Architecture
-Trust boundary
-Root cause
-Impact
-Mitigation
-Lessons learned
-```
+อย่างไรก็ตาม Public Documentation จะไม่ให้คำสั่งที่สามารถนำไปใช้ Bypass Production System ได้โดยตรง
 
-มากกว่าการแจกขั้นตอนสำหรับโจมตี Production System
-
-Proof of Concept ที่มีรายละเอียดเพียงพอสำหรับ Reproduce กับระบบจริงควรถูกส่งให้ผู้ดูแลระบบผ่านช่องทางที่เหมาะสม แทนการใส่รายละเอียดทั้งหมดไว้ใน Public README
-
----
-
-# สรุป
-
-โปรเจกต์นี้เริ่มจากคำถามง่าย ๆ ว่า
-
-> "Server รู้ได้อย่างไรว่าเราดูวิดีโอจริง?"
-
-หลังจากตรวจสอบ Network Traffic, ทดลอง Request ด้วยมือผ่าน Postman และ Burp Suite และวิเคราะห์ State ของระบบ ผมพบว่าปัญหาที่น่าสนใจที่สุดไม่ได้อยู่ที่ API Endpoint ตัวใดตัวหนึ่ง
-
-แต่อยู่ที่ **Trust Model**
-
-ถ้า Client สามารถรายงาน Progress ได้ Backend ต้องถือข้อมูลดังกล่าวว่าเป็น Claim ที่ยังไม่ได้รับการพิสูจน์
-
-Server จึงควรตรวจสอบกับข้อมูลที่ตัวเองเชื่อถือได้ เช่น
+PoC ควรถูกใช้กับ
 
 ```text
-Server Time
-Authenticated Identity
-Authorization
-Session State
-Server-side Video Metadata
-Verified Watch Time
+Mock Server
+Local Lab
+Authorized Environment
 ```
 
-ก่อนเปลี่ยน Learning State
+และควรมีเป้าหมายเพื่อแสดงให้เห็น
 
-ประโยคที่สรุปสิ่งที่ผมได้เรียนรู้จากโปรเจกต์นี้ได้ดีที่สุดคือ
+```text
+Root Cause
+Validation Failure
+Expected Behavior
+Recommended Fix
+```
 
-> **Client reports events. Server decides state.**
-
-และในภาพรวมของ Web Security:
-
-> **Never trust client-controlled state.**
+ไม่ใช่เพื่อทำให้การ Abuse ระบบจริงง่ายขึ้น
 
 ---
 
 # About Me
 
-สวัสดีครับ ผมเป็นนักศึกษาจาก
+ผมเป็นนักศึกษาจาก
 
 **วิทยาลัยเทคนิคนวมินทราชินีมุกดาหาร**
 
@@ -1242,28 +1219,57 @@ Cybersecurity
 Security Research
 ```
 
-ผมยังอยู่ในช่วงเรียนรู้ และโปรเจกต์นี้ก็เป็นหนึ่งในสิ่งที่ทำให้ผมได้เข้าใจ Backend และ Security มากขึ้นกว่าการอ่านจากทฤษฎีเพียงอย่างเดียว
+ผมยังอยู่ในช่วงเรียนรู้ และงานนี้เป็นหนึ่งในโปรเจกต์ที่ทำให้ผมได้เข้าใจ Security จากระบบจริงมากขึ้น
 
-สิ่งที่ผมสนใจไม่ใช่แค่การหาว่า
+สิ่งที่ผมสนใจไม่ใช่แค่
 
-> "ระบบพังตรงไหน"
+> "ช่องโหว่อยู่ตรงไหน"
 
 แต่คือ
 
-> "ทำไมมันถึงเกิดขึ้น และถ้าเราเป็นคนออกแบบระบบ เราจะป้องกันมันอย่างไร"
+> "ทำไมช่องโหว่นั้นถึงเกิดขึ้น และถ้าเราเป็นคนออกแบบระบบ เราจะแก้มันอย่างไร"
 
 ---
 
-## Researcher
+# Researcher
 
 **ntdotjsx**
 
-Student — วิทยาลัยเทคนิคนวมินทราชินีมุกดาหาร
+Student — **วิทยาลัยเทคนิคนวมินทราชินีมุกดาหาร**
 
 GitHub: `github.com/ntdotjsx`
 
 ---
 
+## Final Note
+
+ผมขอขอบคุณผู้พัฒนาระบบที่สร้าง Platform นี้ขึ้นมา
+
+การที่ผมพบ Security Issue ไม่ได้ทำให้ผมมองข้ามงานจำนวนมากที่อยู่เบื้องหลังระบบ
+
+ในทางกลับกัน การที่ระบบมี Logic ป้องกันหลายส่วนอยู่แล้วทำให้ผมได้เรียนรู้มากขึ้นว่า
+
+Security ไม่ได้จบเพียงแค่การเพิ่ม Validation หนึ่งตัว
+
+แต่ต้องคิดถึง
+
+```text
+Identity
+Authorization
+Trust Boundary
+State Management
+Time
+Replay
+Data Integrity
+Business Logic
+```
+
+ร่วมกัน
+
+ผมหวังว่าการศึกษานี้จะมีประโยชน์ในแง่การปรับปรุงระบบและเป็นกรณีศึกษาสำหรับนักพัฒนาคนอื่น ๆ
+
+---
+
 > **Educational & Defensive Security Research Only**
 >
-> งานนี้จัดทำขึ้นเพื่อการศึกษา การวิเคราะห์ Software Security และ Responsible Disclosure ไม่สนับสนุนการนำข้อมูลหรือแนวคิดจากงานวิจัยไปใช้เข้าถึง ดัดแปลง หรือสร้างความเสียหายต่อระบบหรือข้อมูลของบุคคลอื่นโดยไม่ได้รับอนุญาต
+> งานนี้จัดทำขึ้นเพื่อการศึกษา Software Security, Business Logic Security และ Responsible Disclosure เท่านั้น ไม่สนับสนุนการนำช่องโหว่หรือเครื่องมือที่เกี่ยวข้องไปใช้กับระบบหรือข้อมูลของบุคคลอื่นโดยไม่ได้รับอนุญาต
